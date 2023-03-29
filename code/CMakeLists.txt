@@ -15,7 +15,7 @@ add_executable(easycontroller
 target_link_libraries(easycontroller pico_stdlib hardware_pwm hardware_adc)
 
 pico_enable_stdio_usb(easycontroller 1)	# Enable USB printf output
-pico_enable_stdio_uart(easycontroller 1)	# Enable serial printf output
+pico_enable_stdio_uart(easycontroller 0)	# Disable serial printf output
 
 pico_add_extra_outputs(easycontroller)
 
