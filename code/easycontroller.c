@@ -30,16 +30,72 @@ const uint HALL_OVERSAMPLE = 8;
 
 const int THROTTLE_LOW = 600;
 const int THROTTLE_HIGH = 2650;
+const int DUTY_CYCLE_MAX = 65535;
 
-uint8_t hallToMotor[8] = {255, 2, 0, 1, 4, 3, 5, 255};
+uint8_t hallToMotor[8] = {255, 4, 2, 3, 0, 5, 1, 255};
 
-// void on_pwm_wrap() {
-//     pwm_clear_irq(0);
+int adc_isense = 0;
+int adc_vsense = 0;
+int adc_throttle = 0;
 
-//     gpio_put(FLAG_PIN, 1);
-//     uint16_t result = adc_read();
-//     gpio_put(FLAG_PIN, 0);
-// }
+int adc_bias = 0;
+int duty_cycle = 0;
+int current_ma = 0;
+int current_target_ma = 0;
+uint64_t ticks_since_init = 0;
+
+uint get_halls();
+void writePWM(uint motorState, uint duty, bool synchronous);
+uint8_t read_throttle();
+
+
+void on_adc_fifo() {
+    // if(adc_fifo_get_level() < 3)
+    //     return;     // Somehow mistriggered ISR?
+
+    adc_run(false);
+    gpio_put(FLAG_PIN, 1);
+    
+    adc_isense = adc_fifo_get();
+    adc_vsense = adc_fifo_get();
+    adc_throttle = adc_fifo_get();
+
+    uint hall = get_halls();    // 200 nanoseconds
+    uint throttle = read_throttle();
+    uint motorState = hallToMotor[hall];
+    // current_ma = (adc_isense - adc_bias) / 4096 * 3.3 / 0.020;
+    current_ma = (adc_isense - adc_bias) * 40;
+    current_target_ma = throttle * 10;
+
+    duty_cycle += (current_target_ma - current_ma) / 10;
+    if (duty_cycle > DUTY_CYCLE_MAX)
+        duty_cycle = DUTY_CYCLE_MAX;
+    if (duty_cycle < 0)
+        duty_cycle = 0;
+
+    if (throttle == 0)
+    {
+        duty_cycle = 0;
+        ticks_since_init = 0;
+    }
+    ticks_since_init++;
+
+    writePWM(motorState, (uint)(duty_cycle / 256), ticks_since_init > 16000);
+    // writePWM(motorState, (uint)throttle);    
+    gpio_put(FLAG_PIN, 0);
+}
+
+
+void on_pwm_wrap() {
+    // gpio_put(FLAG_PIN, 1);
+    adc_select_input(0);
+    adc_run(true);
+    pwm_clear_irq(A_PWM_SLICE);
+    while(!adc_fifo_is_empty())
+        adc_fifo_get();
+
+    // gpio_put(FLAG_PIN, 0);
+}
 
 void writePhases(uint ah, uint bh, uint ch, uint al, uint bl, uint cl)
 {
@@ -48,25 +104,29 @@ void writePhases(uint ah, uint bh, uint ch, uint al, uint bl, uint cl)
     pwm_set_both_levels(C_PWM_SLICE, ch, 255 - cl);
 }
 
-void writePWM(uint motorState, uint dutyCycle)
+void writePWM(uint motorState, uint duty, bool synchronous)
 {
-  if(dutyCycle == 0)                          // If zero throttle, turn all off
-    motorState = 255;
+    if(duty == 0 || duty > 255)                          // If zero throttle, turn all off
+        motorState = 255;
 
-  if(motorState == 0)                         // LOW A, HIGH B
-      writePhases(0, dutyCycle, 0, 255, 0, 0);
-  else if(motorState == 1)                    // LOW A, HIGH C
-      writePhases(0, 0, dutyCycle, 255, 0, 0);
-  else if(motorState == 2)                    // LOW B, HIGH C
-      writePhases(0, 0, dutyCycle, 0, 255, 0);
-  else if(motorState == 3)                    // LOW B, HIGH A
-      writePhases(dutyCycle, 0, 0, 0, 255, 0);
-  else if(motorState == 4)                    // LOW C, HIGH A
-      writePhases(dutyCycle, 0, 0, 0, 0, 255);
-  else if(motorState == 5)                    // LOW C, HIGH B
-      writePhases(0, dutyCycle, 0, 0, 0, 255);
-  else                                        // All off
-      writePhases(0, 0, 0, 0, 0, 0);
+    uint complement = 0;
+    if(synchronous)
+        complement = 255 - duty;
+
+    if(motorState == 0)                         // LOW A, HIGH B
+        writePhases(0, duty, 0, 255, complement, 0);
+    else if(motorState == 1)                    // LOW A, HIGH C
+        writePhases(0, 0, duty, 255, 0, complement);
+    else if(motorState == 2)                    // LOW B, HIGH C
+        writePhases(0, 0, duty, 0, 255, complement);
+    else if(motorState == 3)                    // LOW B, HIGH A
+        writePhases(duty, 0, 0, complement, 255, 0);
+    else if(motorState == 4)                    // LOW C, HIGH A
+        writePhases(duty, 0, 0, complement, 0, 255);
+    else if(motorState == 5)                    // LOW C, HIGH B
+        writePhases(0, duty, 0, 0, complement, 255);
+    else                                        // All off
+        writePhases(0, 0, 0, 0, 0, 0);
 }
 
 void init_hardware() {
@@ -85,11 +145,6 @@ void init_hardware() {
     gpio_init(HALL_3_PIN);
     gpio_set_dir(HALL_3_PIN, GPIO_IN);
 
-    adc_init();
-    adc_gpio_init(ISENSE_PIN);  // Make sure GPIO is high-impedance, no pullups etc
-    adc_gpio_init(VSENSE_PIN);  // Make sure GPIO is high-impedance, no pullups etc
-    adc_gpio_init(THROTTLE_PIN);  // Make sure GPIO is high-impedance, no pullups etc
-
     gpio_set_function(AH_PIN, GPIO_FUNC_PWM);
     gpio_set_function(AL_PIN, GPIO_FUNC_PWM);
     gpio_set_function(BH_PIN, GPIO_FUNC_PWM);
@@ -97,22 +152,22 @@ void init_hardware() {
     gpio_set_function(CH_PIN, GPIO_FUNC_PWM);
     gpio_set_function(CL_PIN, GPIO_FUNC_PWM);
 
-    // pwm_clear_irq(slice_num);
-    // pwm_set_irq_enabled(slice_num, true);
-    // irq_set_exclusive_handler(PWM_IRQ_WRAP, on_pwm_wrap);
-    // irq_set_enabled(PWM_IRQ_WRAP, true);
+    adc_init();
+    adc_gpio_init(ISENSE_PIN);  // Make sure GPIO is high-impedance, no pullups etc
+    adc_gpio_init(VSENSE_PIN);  // Make sure GPIO is high-impedance, no pullups etc
+    adc_gpio_init(THROTTLE_PIN);  // Make sure GPIO is high-impedance, no pullups etc
+    adc_set_round_robin(0b111);
+    adc_fifo_setup(true, false, 3, false, false);
+    irq_set_exclusive_handler(ADC_IRQ_FIFO, on_adc_fifo);
+    irq_set_priority(ADC_IRQ_FIFO, 0);
+    adc_irq_set_enabled(true);
+    irq_set_enabled(ADC_IRQ_FIFO, true);
 
-    // // uint slice_num = pwm_gpio_to_slice_num(AH_PIN);
-    // for(uint slice_num=0; slice_num < 3; slice_num++) {
-    //     float pwm_divider = (float)(clock_get_hz(clk_sys)) / (F_PWM * 255 * 2);
-    //     pwm_set_wrap(slice_num, 255 - 1);
-    //     pwm_set_phase_correct(slice_num, true);
-    //     pwm_set_clkdiv(slice_num, pwm_divider);
-    //     pwm_set_output_polarity(slice_num, false, true);
-    //     // pwm_set_chan_level(slice_num, PWM_CHAN_A, 100);
-    //     // pwm_set_chan_level(slice_num, PWM_CHAN_B, 100);
-    //     pwm_set_enabled(slice_num, true);
-    // }
+    pwm_clear_irq(A_PWM_SLICE);
+    pwm_set_irq_enabled(A_PWM_SLICE, true);
+    irq_set_exclusive_handler(PWM_IRQ_WRAP, on_pwm_wrap);
+    irq_set_priority(PWM_IRQ_WRAP, 0);
+    irq_set_enabled(PWM_IRQ_WRAP, true);
 
     float pwm_divider = (float)(clock_get_hz(clk_sys)) / (F_PWM * 255 * 2);
     pwm_config config = pwm_get_default_config();
@@ -123,9 +178,17 @@ void init_hardware() {
 
     writePhases(0, 0, 0, 0, 0, 0);
 
-    pwm_init(A_PWM_SLICE, &config, true);
-    pwm_init(B_PWM_SLICE, &config, true);
-    pwm_init(C_PWM_SLICE, &config, true);
+    pwm_init(A_PWM_SLICE, &config, false);
+    pwm_init(B_PWM_SLICE, &config, false);
+    pwm_init(C_PWM_SLICE, &config, false);
+
+    pwm_set_mask_enabled(0x07);
+
+    sleep_ms(1000);
+    for(uint i = 0; i < 100; i++)
+        adc_bias += adc_isense;
+        sleep_ms(10);
+    adc_bias /= 100;
 }
 
 uint get_halls() {
@@ -151,8 +214,9 @@ uint get_halls() {
 
 uint8_t read_throttle()
 {
-    adc_select_input(2);    // Select ADC input to throttle
-    int adc = adc_read();
+    // adc_select_input(2);    // Select ADC input to throttle
+    // int adc = adc_read();
+    int adc = adc_throttle;
     adc = (adc - THROTTLE_LOW) * 256;
     adc = adc / (THROTTLE_HIGH - THROTTLE_LOW);
 
@@ -174,14 +238,14 @@ void identifyHalls()
         for(uint j = 0; j < 500; j++)       // For a while, repeatedly switch between states
         {
             sleep_ms(1);
-            writePWM(i, 25);
+            writePWM(i, 25, false);
             sleep_ms(1);
-            writePWM(nextState, 25);
+            writePWM(nextState, 25, false);
         }
         hallToMotor[get_halls()] = (i + 2) % 6;
     }
 
-    writePWM(0, 0);                           // Turn phases off
+    writePWM(0, 0, false);                           // Turn phases off
 
     for(uint8_t i = 0; i < 8; i++)            // Print out the array
         printf("%d, ", hallToMotor[i]);
@@ -190,30 +254,13 @@ void identifyHalls()
 
 int main() {
     init_hardware();
-    sleep_ms(2000);
     // identifyHalls();
 
     uint counter = 0;
     while (true) {
-        uint throttle = read_throttle();  // readThrottle() is slow. So do the more important things 200 times more often
+        printf("%d %d %d\n", current_ma, current_target_ma, duty_cycle);
         gpio_put(LED_PIN, !gpio_get(LED_PIN));
-        gpio_put(FLAG_PIN, !gpio_get(FLAG_PIN));
-        for(uint i = 0; i < 200; i++)
-        {  
-            uint hall = get_halls();              // Read from the hall sensors
-            uint motorState = hallToMotor[hall]; // Convert from hall values (from 1 to 6) to motor state values (from 0 to 5) in the correct order. This line is magic
-            writePWM(motorState, throttle);         // Actually command the transistors to switch into specified sequence and PWM value
-        }
-
-
-        // uint throttle = read_throttle();
-        // printf("Throttle: %03d, halls %d\n", read_throttle(), get_halls());
-
-        // sleep_ms(200);
-        // // pwm_set_chan_level(slice_num, PWM_CHAN_B, thresh);
-
-        // counter++;
-        // writePWM((counter / 5) % 6, 18);
+        sleep_ms(100);
     }
     return 0;
 }
