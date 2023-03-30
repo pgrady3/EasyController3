@@ -1,5 +1,7 @@
 # EasyController3
 
+Note, the code and documentation surrounding this are still being updated. However, the board are hardware are final.
+
 ![Assembled Controller](/docs/side.jpg)
 
 The EasyController3 is the next evolution of the successful [EasyController2](https://github.com/pgrady3/EasyController2). The new version is cheaper, more efficient, and uses well-stocked components.
