@@ -31,8 +31,9 @@ const uint HALL_OVERSAMPLE = 8;
 const int THROTTLE_LOW = 600;
 const int THROTTLE_HIGH = 2650;
 const int DUTY_CYCLE_MAX = 65535;
-const int FULL_SCALE_CURRENT_MA = 1000;
+const int FULL_SCALE_CURRENT_MA = 3000;
 const int CURRENT_SCALING = 3.3 / 0.001 / 20 / 4096 * 1000;
+const int VOLTAGE_SCALING = 3.3 / 4096 * (47 + 2.2) / 2.2 * 1000;
 
 const int HALL_IDENTIFY_DUTY = 25;
 uint8_t hallToMotor[8] = {255, 4, 2, 3, 0, 5, 1, 255};
@@ -43,6 +44,7 @@ int adc_throttle = 0;
 
 int adc_bias = 0;
 int duty_cycle = 0;
+int voltage_mv = 0;
 int current_ma = 0;
 int current_target_ma = 0;
 uint64_t ticks_since_init = 0;
@@ -69,6 +71,7 @@ void on_adc_fifo() {
 
     current_ma = (adc_isense - adc_bias) * CURRENT_SCALING;
     current_target_ma = throttle * FULL_SCALE_CURRENT_MA / 256;
+    voltage_mv = adc_vsense * VOLTAGE_SCALING;
 
     duty_cycle += (current_target_ma - current_ma) / 10;
     if (duty_cycle > DUTY_CYCLE_MAX)
@@ -91,14 +94,14 @@ void on_adc_fifo() {
 
 
 void on_pwm_wrap() {
-    // gpio_put(FLAG_PIN, 1);
+    gpio_put(FLAG_PIN, 1);
     adc_select_input(0);
     adc_run(true);
     pwm_clear_irq(A_PWM_SLICE);
     while(!adc_fifo_is_empty())
         adc_fifo_get();
 
-    // gpio_put(FLAG_PIN, 0);
+    gpio_put(FLAG_PIN, 0);
 }
 
 void writePhases(uint ah, uint bh, uint ch, uint al, uint bl, uint cl)
@@ -262,7 +265,7 @@ int main() {
 
     uint counter = 0;
     while (true) {
-        printf("%d %d %d\n", current_ma, current_target_ma, duty_cycle);
+        printf("%d %d %d %d\n", current_ma, current_target_ma, duty_cycle, voltage_mv);
         gpio_put(LED_PIN, !gpio_get(LED_PIN));
         sleep_ms(100);
     }
