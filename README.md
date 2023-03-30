@@ -1,5 +1,7 @@
 # EasyController3
 
+![Assembled Controller](/docs/side.jpg)
+
 The EasyController3 is the next evolution of the successful [EasyController2](https://github.com/pgrady3/EasyController2). The new version is cheaper, more efficient, and uses well-stocked components.
 
 ## Improvements over the EasyController2
@@ -20,8 +22,6 @@ For a comprehensive guide on how to build your own EasyController, please see th
 The EasyController3 is a a simple brushless (BLDC) sensored motor controller (also known as a motor inverter or motor drive). It is intended to power vehicles such as electric bikes, skateboards, or Eco-Marathon vehicles in the 50-1000 Watt range.
 
 The EasyController family was built to to fill a gap in publicly released motor controller designs. The [VESC](https://vesc-project.com/) is an extremely complex but capable design, but cannot be modified without extensive expertise. Alternatively, other DIY designs are not capable of the power levels necessary to drive vehicles. The EasyController3 is designed to be as simple yet still highly functional. It deliberately omits more complex features such as sensorless or field-oriented control, however these features can be added with modification. This project is meant as a learning tool and a foundation to potentially build more complex designs from.
-
-![Assembled Controller](/docs/side.jpg)
 
 ## Specifications
 * 8v-60v operation
