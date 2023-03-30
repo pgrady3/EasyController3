@@ -31,7 +31,10 @@ const uint HALL_OVERSAMPLE = 8;
 const int THROTTLE_LOW = 600;
 const int THROTTLE_HIGH = 2650;
 const int DUTY_CYCLE_MAX = 65535;
+const int FULL_SCALE_CURRENT_MA = 1000;
+const int CURRENT_SCALING = 3.3 / 0.001 / 20 / 4096 * 1000;
 
+const int HALL_IDENTIFY_DUTY = 25;
 uint8_t hallToMotor[8] = {255, 4, 2, 3, 0, 5, 1, 255};
 
 int adc_isense = 0;
@@ -63,9 +66,9 @@ void on_adc_fifo() {
     uint hall = get_halls();    // 200 nanoseconds
     uint throttle = read_throttle();
     uint motorState = hallToMotor[hall];
-    // current_ma = (adc_isense - adc_bias) / 4096 * 3.3 / 0.020;
-    current_ma = (adc_isense - adc_bias) * 40;
-    current_target_ma = throttle * 10;
+
+    current_ma = (adc_isense - adc_bias) * CURRENT_SCALING;
+    current_target_ma = throttle * FULL_SCALE_CURRENT_MA / 256;
 
     duty_cycle += (current_target_ma - current_ma) / 10;
     if (duty_cycle > DUTY_CYCLE_MAX)
@@ -80,8 +83,9 @@ void on_adc_fifo() {
     }
     ticks_since_init++;
 
-    writePWM(motorState, (uint)(duty_cycle / 256), ticks_since_init > 16000);
-    // writePWM(motorState, (uint)throttle);    
+    bool synchronous = ticks_since_init > 16000;    // Only enable synchronous switching some time after beginning control loop. This allows control loop to stabilize
+    writePWM(motorState, (uint)(duty_cycle / 256), synchronous);
+    // writePWM(motorState, (uint)throttle, false);    
     gpio_put(FLAG_PIN, 0);
 }
 
@@ -202,11 +206,11 @@ uint get_halls() {
 
     uint hall = 0;
 
-    if (hallCounts[0] >= HALL_OVERSAMPLE / 2)     // If votes >= threshold, call that a 1
+    if (hallCounts[0] > HALL_OVERSAMPLE / 2)     // If votes >= threshold, call that a 1
         hall |= (1<<0);                             // Store a 1 in the 0th bit
-    if (hallCounts[1] >= HALL_OVERSAMPLE / 2)
+    if (hallCounts[1] > HALL_OVERSAMPLE / 2)
         hall |= (1<<1);                             // Store a 1 in the 1st bit
-    if (hallCounts[2] >= HALL_OVERSAMPLE / 2)
+    if (hallCounts[2] > HALL_OVERSAMPLE / 2)
         hall |= (1<<2);                             // Store a 1 in the 2nd bit
 
     return hall & 0x7;                            // Just to make sure we didn't do anything stupid, set the maximum output value to 7
@@ -238,9 +242,9 @@ void identifyHalls()
         for(uint j = 0; j < 500; j++)       // For a while, repeatedly switch between states
         {
             sleep_ms(1);
-            writePWM(i, 25, false);
+            writePWM(i, HALL_IDENTIFY_DUTY, false);
             sleep_ms(1);
-            writePWM(nextState, 25, false);
+            writePWM(nextState, HALL_IDENTIFY_DUTY, false);
         }
         hallToMotor[get_halls()] = (i + 2) % 6;
     }
