@@ -1,6 +1,6 @@
 # EasyController3
 
-Note, the code and documentation surrounding this are still being updated. However, the board are hardware are final.
+Note, the code and documentation surrounding this are still being updated. However, the board and hardware are final.
 
 ![Assembled Controller](/docs/side.jpg)
 
@@ -9,25 +9,27 @@ The EasyController3 is the next evolution of the successful [EasyController2](ht
 ## Improvements over the EasyController2
 
 * Reduced BOM cost from $70 to $36
-* Uses more efficient synchronous PWM. 5-10% greater total efficiency under partial throttle operation
+* Uses more efficient synchronous PWM. 5-10% greater efficiency under partial throttle operation
 * Improved from duty-cycle control to torque-control, improving controllability and reducing current spikes
+* Added regenerative braking
 * Lowered quiescent power from 960 mW to 280 mW in a typical installation
-* Based on widely available Raspberry Pi Pico microcontroller
+* Based on Raspberry Pi Pico microcontroller
 * Uses more widely available surface-mount components
 
 ## Getting Started
 
-For a comprehensive guide on how to build your own EasyController, please see the [getting started guide](/docs/getting-started.md) (under construction).
+For a comprehensive guide on how to build your own EasyController, please see the [getting started guide](/docs/getting-started.md).
 
 ## Background
 
-The EasyController3 is a a simple brushless (BLDC) sensored motor controller (also known as a motor inverter or motor drive). It is intended to power vehicles such as electric bikes, skateboards, or Eco-Marathon vehicles in the 50-1000 Watt range.
+The EasyController3 is a a simple brushless (BLDC) sensored motor controller (also known as an ESC, motor inverter, or motor drive). It is intended to power vehicles such as electric bikes, skateboards, or [Eco-Marathon vehicles](https://en.wikipedia.org/wiki/Shell_Eco-marathon) in the 50-1000 watt range. It is designed for hobbyists to assemble at home.
 
-The EasyController family was built to to fill a gap in publicly released motor controller designs. The [VESC](https://vesc-project.com/) is an extremely complex but capable design, but cannot be modified without extensive expertise. Alternatively, other DIY designs are not capable of the power levels necessary to drive vehicles. The EasyController3 is designed to be as simple yet still highly functional. It deliberately omits more complex features such as sensorless or field-oriented control, however these features can be added with modification. This project is meant as a learning tool and a foundation to potentially build more complex designs from.
+The EasyController family was built to to fill a gap in publicly released motor controller designs. It is designed to be simple yet still highly functional. It deliberately omits more complex features such as sensorless or field-oriented control, however these features can be added with modification. This project is meant as a learning tool and a foundation to potentially build more complex designs from.
 
 ## Specifications
 * 8v-60v operation
 * 20A continuous current, 40A burst (more with heatsinking)
+* Large surface mount components designed to be hand-soldered by hobbyists
 * Socket for automotive fuse
 * Automatic hall sensor identification
 * Simple, well-documented code. <300 lines with comments
@@ -50,6 +52,15 @@ The EasyController family was built to to fill a gap in publicly released motor 
 
 * PCB layout: [Eagle](https://www.autodesk.com/products/eagle/free-download)
 * Compiler: [RP2040 C SDK](https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf) (see chapter 9)
+
+## Other Related Controller Designs
+
+There are several other open-source motor controller designs worth mentioning:
+* The [VESC](https://vesc-project.com/) is a highly capable design, and is well suited for vehicle applications. However, due to the complexity and poorly written code, it is difficult to modify.
+* The [Simple FOC](https://simplefoc.com/) project is an open-source library for FOC commutation. However, due to the hardware-agnostic code, it is low-performance and suited for gimbal motors, not vehicle applications.
+* The [ODrive](https://odriverobotics.com/) is a modular controller built for robotics applications. However, the hardware is closed-source.
+
+The EasyController3 is most suitable for people who want to design, build, and understand their own motor controller. If you'd just like to purchase something off-the-shelf, we recommend the VESC, which is around $100 USD.
 
 ## Contact Us
 

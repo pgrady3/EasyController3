@@ -1,4 +1,6 @@
 code/build
+build
+.vscode
 ~$*.xlsx
 
 # Ignore list for Eagle, a PCB layout tool

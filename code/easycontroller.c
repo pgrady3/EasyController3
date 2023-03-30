@@ -6,6 +6,16 @@
 #include "hardware/adc.h"
 #include "hardware/gpio.h"
 
+// User settings here ---------------------------
+
+const bool IDENTIFY_HALLS_ON_BOOT = false;
+uint8_t hallToMotor[8] = {255, 4, 2, 3, 0, 5, 1, 255};
+const int FULL_SCALE_CURRENT_MA = 3000;
+const int THROTTLE_LOW = 600;
+const int THROTTLE_HIGH = 2650;
+
+// End user settings ----------------------------
+
 const uint LED_PIN = 25;
 const uint AH_PIN = 16;
 const uint AL_PIN = 17;
@@ -28,15 +38,11 @@ const uint F_PWM = 16000;
 const uint FLAG_PIN = 2;
 const uint HALL_OVERSAMPLE = 8;
 
-const int THROTTLE_LOW = 600;
-const int THROTTLE_HIGH = 2650;
 const int DUTY_CYCLE_MAX = 65535;
-const int FULL_SCALE_CURRENT_MA = 3000;
 const int CURRENT_SCALING = 3.3 / 0.001 / 20 / 4096 * 1000;
 const int VOLTAGE_SCALING = 3.3 / 4096 * (47 + 2.2) / 2.2 * 1000;
 
-const int HALL_IDENTIFY_DUTY = 25;
-uint8_t hallToMotor[8] = {255, 4, 2, 3, 0, 5, 1, 255};
+const int HALL_IDENTIFY_DUTY_CYCLE = 25;
 
 int adc_isense = 0;
 int adc_vsense = 0;
@@ -236,7 +242,7 @@ uint8_t read_throttle()
     return adc;
 }
 
-void identifyHalls()
+void identify_halls()
 {
     for(uint i = 0; i < 6; i++)
     {
@@ -245,9 +251,9 @@ void identifyHalls()
         for(uint j = 0; j < 500; j++)       // For a while, repeatedly switch between states
         {
             sleep_ms(1);
-            writePWM(i, HALL_IDENTIFY_DUTY, false);
+            writePWM(i, HALL_IDENTIFY_DUTY_CYCLE, false);
             sleep_ms(1);
-            writePWM(nextState, HALL_IDENTIFY_DUTY, false);
+            writePWM(nextState, HALL_IDENTIFY_DUTY_CYCLE, false);
         }
         hallToMotor[get_halls()] = (i + 2) % 6;
     }
@@ -261,9 +267,10 @@ void identifyHalls()
 
 int main() {
     init_hardware();
-    // identifyHalls();
 
-    uint counter = 0;
+    if(IDENTIFY_HALLS_ON_BOOT)
+        identifyHalls();
+
     while (true) {
         printf("%d %d %d %d\n", current_ma, current_target_ma, duty_cycle, voltage_mv);
         gpio_put(LED_PIN, !gpio_get(LED_PIN));
