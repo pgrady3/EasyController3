@@ -1,6 +1,8 @@
 # EasyController3
 
-Note, the code and documentation surrounding this are still being updated. However, the board and hardware are final.
+Note, the code and documentation surrounding this are still being updated.
+
+*Additionally, the hardware is still undergoing reliability tests. It appears that the charge pump used in version 3.0 is unreliable.*
 
 ![Assembled Controller](/docs/side.jpg)
 
