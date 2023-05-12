@@ -2,6 +2,7 @@ code/build
 build
 .vscode
 ~$*.xlsx
+serial_log/
 
 # Ignore list for Eagle, a PCB layout tool
 

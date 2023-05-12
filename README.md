@@ -2,7 +2,7 @@
 
 Note, the code and documentation surrounding this are still being updated.
 
-*Additionally, the hardware is still undergoing reliability tests. It appears that the charge pump used in version 3.0 is unreliable.*
+* Update May 12 2023 - During high power testing above 15 amps, it was discovered that the gate drivers are unreliable. A fix has been developed, and version 3.1 will be released soon. The controller is currently not in a polished state. This page will be updated as development progresses.*
 
 ![Assembled Controller](/docs/side.jpg)
 
