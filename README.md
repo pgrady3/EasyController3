@@ -1,8 +1,6 @@
 # EasyController3
 
-Note, the code and documentation surrounding this are still being updated.
-
-* Update May 12 2023 - During high power testing above 15 amps, it was discovered that the gate drivers are unreliable. A fix has been developed, and version 3.1 will be released soon. The controller is currently not in a polished state. This page will be updated as development progresses.*
+*Update May 12, 2023 - During high power testing above 15 amps, it was discovered that the gate drivers are unreliable. A fix has been developed, and version 3.1 will be released soon. We were in a bit of a rush to release and didn't test as thoroughly as we should have. Please check this page for updates, or contact me (email below) for questions!*
 
 ![Assembled Controller](/docs/side.jpg)
 
