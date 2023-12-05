@@ -5,16 +5,37 @@
 #include "hardware/irq.h"
 #include "hardware/adc.h"
 #include "hardware/gpio.h"
+#include "hardware/sync.h"
 
-// User settings here ---------------------------
+// Begin user config section ---------------------------
 
 const bool IDENTIFY_HALLS_ON_BOOT = false;
-uint8_t hallToMotor[8] = {255, 4, 2, 3, 0, 5, 1, 255};
-const int FULL_SCALE_CURRENT_MA = 3000;
+const bool IDENTIFY_HALLS_REVERSE = false;
+
+// uint8_t hallToMotor[8] = {255, 255, 255, 255, 255, 255, 255, 255};  // Default
+uint8_t hallToMotor[8] = {255, 0, 2, 1, 4, 5, 3, 255};  // Bike motor
+// uint8_t hallToMotor[8] = {255, 1, 5, 0, 3, 2, 4, 255};  // Prop motor
+// uint8_t hallToMotor[8] = {255, 2, 0, 1, 4, 3, 5, 255};  // state +1
+// uint8_t hallToMotor[8] = {255, 0, 4, 5, 2, 1, 3, 255};  // state -1
 const int THROTTLE_LOW = 600;
 const int THROTTLE_HIGH = 2650;
 
-// End user settings ----------------------------
+const bool CURRENT_CONTROL = true;
+const int PHASE_MAX_CURRENT_MA = 50000;
+const int BATTERY_MAX_CURRENT_MA = 20000;
+const int CURRENT_LOOP_DIV = 200;
+
+// End user config section -----------------------------
+
+#define MEMORY_LEN 10000
+int memory_current[MEMORY_LEN];
+int memory_current_target[MEMORY_LEN];
+int memory_throttle[MEMORY_LEN];
+int memory_hall[MEMORY_LEN];
+int memory_voltage[MEMORY_LEN];
+int memory_duty[MEMORY_LEN];
+int memory_pos = 0;
+bool memory_writing = false;
 
 const uint LED_PIN = 25;
 const uint AH_PIN = 16;
@@ -41,6 +62,7 @@ const uint HALL_OVERSAMPLE = 8;
 const int DUTY_CYCLE_MAX = 65535;
 const int CURRENT_SCALING = 3.3 / 0.001 / 20 / 4096 * 1000;
 const int VOLTAGE_SCALING = 3.3 / 4096 * (47 + 2.2) / 2.2 * 1000;
+const int ADC_BIAS_OVERSAMPLE = 1000;
 
 const int HALL_IDENTIFY_DUTY_CYCLE = 25;
 
@@ -53,6 +75,9 @@ int duty_cycle = 0;
 int voltage_mv = 0;
 int current_ma = 0;
 int current_target_ma = 0;
+int hall = 0;
+uint motorState = 0;
+int fifo_level = 0;
 uint64_t ticks_since_init = 0;
 
 uint get_halls();
@@ -61,29 +86,35 @@ uint8_t read_throttle();
 
 
 void on_adc_fifo() {
-    // if(adc_fifo_get_level() < 3)
-    //     return;     // Somehow mistriggered ISR?
+    uint32_t flags = save_and_disable_interrupts(); // Disable interrupts for the time-critical reading ADC section
 
     adc_run(false);
     gpio_put(FLAG_PIN, 1);
-    
+
+    fifo_level = adc_fifo_get_level();    
     adc_isense = adc_fifo_get();
     adc_vsense = adc_fifo_get();
     adc_throttle = adc_fifo_get();
 
-    uint hall = get_halls();    // 200 nanoseconds
-    uint throttle = read_throttle();
-    uint motorState = hallToMotor[hall];
+    restore_interrupts(flags);
+
+    if(fifo_level != 3) {
+        // The RP2040 is a shitty microcontroller. The ADC is unpredictable, and 1% of times
+        // will return more or less than the 3 samples it should. If we don't get the expected number, abort
+        return;
+    }
+
+    hall = get_halls();    // Takes ~200 nanoseconds
+    motorState = hallToMotor[hall];
+
+    int throttle = ((adc_throttle - THROTTLE_LOW) * 256) / (THROTTLE_HIGH - THROTTLE_LOW);
+    throttle = MAX(0, MIN(255, throttle));
 
     current_ma = (adc_isense - adc_bias) * CURRENT_SCALING;
-    current_target_ma = throttle * FULL_SCALE_CURRENT_MA / 256;
+    current_target_ma = throttle * PHASE_MAX_CURRENT_MA / 256;
+    int current_target_batt_ma = BATTERY_MAX_CURRENT_MA * DUTY_CYCLE_MAX / duty_cycle;
+    current_target_ma = MIN(current_target_batt_ma, current_target_ma);
     voltage_mv = adc_vsense * VOLTAGE_SCALING;
-
-    duty_cycle += (current_target_ma - current_ma) / 10;
-    if (duty_cycle > DUTY_CYCLE_MAX)
-        duty_cycle = DUTY_CYCLE_MAX;
-    if (duty_cycle < 0)
-        duty_cycle = 0;
 
     if (throttle == 0)
     {
@@ -92,12 +123,35 @@ void on_adc_fifo() {
     }
     ticks_since_init++;
 
-    bool synchronous = ticks_since_init > 16000;    // Only enable synchronous switching some time after beginning control loop. This allows control loop to stabilize
-    writePWM(motorState, (uint)(duty_cycle / 256), synchronous);
-    // writePWM(motorState, (uint)throttle, false);    
+    if(CURRENT_CONTROL) {
+        duty_cycle += (current_target_ma - current_ma) / CURRENT_LOOP_DIV;
+        duty_cycle = MAX(0, MIN(DUTY_CYCLE_MAX, duty_cycle));
+
+        bool do_synchronous = ticks_since_init > 16000;    // Only enable synchronous switching some time after beginning control loop. This allows control loop to stabilize
+        writePWM(motorState, (uint)(duty_cycle / 256), do_synchronous);
+    }
+    else {
+        duty_cycle = throttle * 256;
+        writePWM(motorState, (uint)(duty_cycle / 256), true);
+    }
+
+    if(memory_writing)
+    {
+        memory_current[memory_pos] = current_ma;
+        memory_current_target[memory_pos] = current_target_ma;
+        memory_voltage[memory_pos] = voltage_mv;
+        memory_throttle[memory_pos] = throttle;
+        memory_hall[memory_pos] = hall;
+        memory_voltage[memory_pos] = voltage_mv;
+        memory_duty[memory_pos] = duty_cycle;
+        memory_pos++;
+
+        if(memory_pos >= MEMORY_LEN)
+            memory_writing = false;
+    }
+
     gpio_put(FLAG_PIN, 0);
 }
-
 
 void on_pwm_wrap() {
     gpio_put(FLAG_PIN, 1);
@@ -124,7 +178,7 @@ void writePWM(uint motorState, uint duty, bool synchronous)
 
     uint complement = 0;
     if(synchronous)
-        complement = 255 - duty;
+        complement = 250 - duty;
 
     if(motorState == 0)                         // LOW A, HIGH B
         writePhases(0, duty, 0, 255, complement, 0);
@@ -169,6 +223,15 @@ void init_hardware() {
     adc_gpio_init(ISENSE_PIN);  // Make sure GPIO is high-impedance, no pullups etc
     adc_gpio_init(VSENSE_PIN);  // Make sure GPIO is high-impedance, no pullups etc
     adc_gpio_init(THROTTLE_PIN);  // Make sure GPIO is high-impedance, no pullups etc
+
+    sleep_ms(100);
+    for(uint i = 0; i < ADC_BIAS_OVERSAMPLE; i++)
+    {
+        adc_select_input(0);
+        adc_bias += adc_read();
+    }
+    adc_bias /= ADC_BIAS_OVERSAMPLE;
+
     adc_set_round_robin(0b111);
     adc_fifo_setup(true, false, 3, false, false);
     irq_set_exclusive_handler(ADC_IRQ_FIFO, on_adc_fifo);
@@ -177,7 +240,6 @@ void init_hardware() {
     irq_set_enabled(ADC_IRQ_FIFO, true);
 
     pwm_clear_irq(A_PWM_SLICE);
-    pwm_set_irq_enabled(A_PWM_SLICE, true);
     irq_set_exclusive_handler(PWM_IRQ_WRAP, on_pwm_wrap);
     irq_set_priority(PWM_IRQ_WRAP, 0);
     irq_set_enabled(PWM_IRQ_WRAP, true);
@@ -196,12 +258,6 @@ void init_hardware() {
     pwm_init(C_PWM_SLICE, &config, false);
 
     pwm_set_mask_enabled(0x07);
-
-    sleep_ms(1000);
-    for(uint i = 0; i < 100; i++)
-        adc_bias += adc_isense;
-        sleep_ms(10);
-    adc_bias /= 100;
 }
 
 uint get_halls() {
@@ -213,68 +269,91 @@ uint get_halls() {
         hallCounts[2] += gpio_get(HALL_3_PIN);
     }
 
-    uint hall = 0;
+    uint hall_raw = 0;
 
     if (hallCounts[0] > HALL_OVERSAMPLE / 2)     // If votes >= threshold, call that a 1
-        hall |= (1<<0);                             // Store a 1 in the 0th bit
+        hall_raw |= (1<<0);                             // Store a 1 in the 0th bit
     if (hallCounts[1] > HALL_OVERSAMPLE / 2)
-        hall |= (1<<1);                             // Store a 1 in the 1st bit
+        hall_raw |= (1<<1);                             // Store a 1 in the 1st bit
     if (hallCounts[2] > HALL_OVERSAMPLE / 2)
-        hall |= (1<<2);                             // Store a 1 in the 2nd bit
+        hall_raw |= (1<<2);                             // Store a 1 in the 2nd bit
 
-    return hall & 0x7;                            // Just to make sure we didn't do anything stupid, set the maximum output value to 7
-}
-
-uint8_t read_throttle()
-{
-    // adc_select_input(2);    // Select ADC input to throttle
-    // int adc = adc_read();
-    int adc = adc_throttle;
-    adc = (adc - THROTTLE_LOW) * 256;
-    adc = adc / (THROTTLE_HIGH - THROTTLE_LOW);
-
-    if (adc > 255) // Bound the output between 0 and 255
-        return 255;
-
-    if (adc < 0)
-        return 0;
-
-    return adc;
+    return hall_raw & 0x7;                            // Just to make sure we didn't do anything stupid, set the maximum output value to 7
 }
 
 void identify_halls()
 {
+    sleep_ms(3000);
     for(uint i = 0; i < 6; i++)
     {
         uint8_t nextState = (i + 1) % 6;        // Calculate what the next state should be. This is for switching into half-states
         printf("Going to %d\n", i);
-        for(uint j = 0; j < 500; j++)       // For a while, repeatedly switch between states
+        for(uint j = 0; j < 1000; j++)       // For a while, repeatedly switch between states
         {
-            sleep_ms(1);
+            sleep_us(500);
             writePWM(i, HALL_IDENTIFY_DUTY_CYCLE, false);
-            sleep_ms(1);
+            sleep_us(500);
             writePWM(nextState, HALL_IDENTIFY_DUTY_CYCLE, false);
         }
-        hallToMotor[get_halls()] = (i + 2) % 6;
+        if(IDENTIFY_HALLS_REVERSE)
+            hallToMotor[get_halls()] = (i + 5) % 6;
+        else
+            hallToMotor[get_halls()] = (i + 2) % 6;
+
+        // printf("hall %d step %d\n", get_halls(), i);
     }
 
     writePWM(0, 0, false);                           // Turn phases off
 
+    printf("hallToMotor array:\n");
     for(uint8_t i = 0; i < 8; i++)            // Print out the array
         printf("%d, ", hallToMotor[i]);
-    printf("\n");
+    printf("\nIf any values are 255 except the first and last, the auto-identify was not successful.\n");
 }
 
 int main() {
     init_hardware();
 
     if(IDENTIFY_HALLS_ON_BOOT)
-        identifyHalls();
+        identify_halls();
 
+    // int s = 0;
+    // while(true)
+    // {
+    //     writePWM(s % 6, 25, false);
+    //     sleep_ms(100);
+    //     s++;
+    // }
+
+    sleep_ms(1000);
+
+    pwm_set_irq_enabled(A_PWM_SLICE, true); // Enables interrupts, starting commutation
+
+    uint ticks = 0;
     while (true) {
-        printf("%d %d %d %d\n", current_ma, current_target_ma, duty_cycle, voltage_mv);
+        // if(ticks == 300)
+        //     adc_throttle = 1500;
+        // // if(ticks == 800)
+        // //     adc_throttle = 3000;
+        // if(ticks == 1000)
+        //     adc_throttle = 500;
+        // if(memory_pos == 0 && ticks == 290)
+        //     memory_writing = true;
+
+        // if(memory_pos == MEMORY_LEN && !memory_writing) {
+        //     adc_throttle = 500;
+        //     for(int i=0; i<MEMORY_LEN; i++) {
+        //         printf("%6d, %6d, %6d, %6d, %6d, %6d\n", memory_current[i], memory_current_target[i], memory_duty[i], memory_voltage[i], memory_hall[i], memory_throttle[i]);
+        //         sleep_ms(1);
+        //     }
+        //     memory_pos += 100;
+        // }
+        
+        printf("%6d, %6d, %6d, %6d, %2d, %2d, %1d\n", current_ma, current_target_ma, duty_cycle, voltage_mv, hall, motorState, fifo_level);
         gpio_put(LED_PIN, !gpio_get(LED_PIN));
-        sleep_ms(100);
+        sleep_ms(10);
+        ticks++;
     }
+
     return 0;
 }
