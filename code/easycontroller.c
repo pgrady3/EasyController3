@@ -6,6 +6,7 @@
 #include "hardware/adc.h"
 #include "hardware/gpio.h"
 #include "hardware/sync.h"
+#include "hardware/uart.h"
 
 // Begin user config section ---------------------------
 
@@ -21,8 +22,8 @@ const int THROTTLE_LOW = 600;
 const int THROTTLE_HIGH = 2650;
 
 const bool CURRENT_CONTROL = true;
-const int PHASE_MAX_CURRENT_MA = 50000;
-const int BATTERY_MAX_CURRENT_MA = 20000;
+const int PHASE_MAX_CURRENT_MA = 60000;
+const int BATTERY_MAX_CURRENT_MA = 30000;
 const int CURRENT_LOOP_DIV = 200;
 
 // End user config section -----------------------------
@@ -200,6 +201,11 @@ void init_hardware() {
     // Initialize all peripherals
 
     stdio_init_all();
+
+    uart_init(uart0, 9600);
+    gpio_set_function(0, GPIO_FUNC_UART);
+    gpio_set_function(1, GPIO_FUNC_UART);
+
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
     gpio_init(FLAG_PIN);
@@ -349,9 +355,13 @@ int main() {
         //     memory_pos += 100;
         // }
         
+        char bt_str[100];
+        sprintf(bt_str, "%6d, %6d, %6d\n", current_ma / 1000, duty_cycle / 1000, voltage_mv / 1000);
+        uart_puts(uart0, bt_str);
+
         printf("%6d, %6d, %6d, %6d, %2d, %2d, %1d\n", current_ma, current_target_ma, duty_cycle, voltage_mv, hall, motorState, fifo_level);
         gpio_put(LED_PIN, !gpio_get(LED_PIN));
-        sleep_ms(10);
+        sleep_ms(100);
         ticks++;
     }
 
