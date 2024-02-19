@@ -10,7 +10,7 @@
 
 // Begin user config section ---------------------------
 
-const bool IDENTIFY_HALLS_ON_BOOT = false;
+const bool IDENTIFY_HALLS_ON_BOOT = true;
 const bool IDENTIFY_HALLS_REVERSE = false;
 
 // uint8_t hallToMotor[8] = {255, 255, 255, 255, 255, 255, 255, 255};  // Default
@@ -61,7 +61,7 @@ const uint FLAG_PIN = 2;
 const uint HALL_OVERSAMPLE = 8;
 
 const int DUTY_CYCLE_MAX = 65535;
-const int CURRENT_SCALING = 3.3 / 0.001 / 20 / 4096 * 1000;
+const int CURRENT_SCALING = 3.3 / 0.0005 / 20 / 4096 * 1000;
 const int VOLTAGE_SCALING = 3.3 / 4096 * (47 + 2.2) / 2.2 * 1000;
 const int ADC_BIAS_OVERSAMPLE = 1000;
 
@@ -289,7 +289,7 @@ uint get_halls() {
 
 void identify_halls()
 {
-    sleep_ms(3000);
+    sleep_ms(2000);
     for(uint i = 0; i < 6; i++)
     {
         uint8_t nextState = (i + 1) % 6;        // Calculate what the next state should be. This is for switching into half-states
@@ -327,7 +327,7 @@ int main() {
     // while(true)
     // {
     //     writePWM(s % 6, 25, false);
-    //     sleep_ms(100);
+    //     sleep_ms(50);
     //     s++;
     // }
 

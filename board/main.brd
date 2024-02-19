@@ -918,24 +918,24 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PROD_ID" value="CAP-09822" x="24" y="3" size="1.778" layer="27" display="off"/>
 <attribute name="VALUE" x="23" y="1.857" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
-<element name="Q1" library="Custom_old" package="TO-220-FLAT" value="MOSFET-NCHANNELTO-220-FLAT" x="7" y="44" smashed="yes" rot="R180">
+<element name="Q1" library="Custom_old" package="TO-220-FLAT" value="" x="7" y="44" smashed="yes" rot="R180">
 <attribute name="NAME" x="12" y="44" size="1.27" layer="25" rot="R90" align="bottom-center"/>
 </element>
-<element name="Q2" library="Custom_old" package="TO-220-FLAT" value="MOSFET-NCHANNELTO-220-FLAT" x="7" y="50" smashed="yes">
+<element name="Q2" library="Custom_old" package="TO-220-FLAT" value="" x="7" y="50" smashed="yes">
 <attribute name="NAME" x="12" y="50" size="1.27" layer="25" rot="R90" align="bottom-center"/>
 </element>
 <element name="U$4" library="Custom_old" package="PAD" value="PAD" x="75" y="69" smashed="yes" rot="R90"/>
 <element name="U$5" library="Custom_old" package="PAD" value="PAD" x="64" y="69" smashed="yes" rot="R270"/>
-<element name="Q3" library="Custom_old" package="TO-220-FLAT" value="MOSFET-NCHANNELTO-220-FLAT" x="22" y="44" smashed="yes" rot="R180">
+<element name="Q3" library="Custom_old" package="TO-220-FLAT" value="" x="22" y="44" smashed="yes" rot="R180">
 <attribute name="NAME" x="27.2" y="44" size="1.27" layer="25" rot="R90" align="bottom-center"/>
 </element>
-<element name="Q4" library="Custom_old" package="TO-220-FLAT" value="MOSFET-NCHANNELTO-220-FLAT" x="22" y="50" smashed="yes">
+<element name="Q4" library="Custom_old" package="TO-220-FLAT" value="" x="22" y="50" smashed="yes">
 <attribute name="NAME" x="27.2" y="50" size="1.27" layer="25" rot="R90" align="bottom-center"/>
 </element>
-<element name="Q5" library="Custom_old" package="TO-220-FLAT" value="MOSFET-NCHANNELTO-220-FLAT" x="37" y="44" smashed="yes" rot="R180">
+<element name="Q5" library="Custom_old" package="TO-220-FLAT" value="" x="37" y="44" smashed="yes" rot="R180">
 <attribute name="NAME" x="42.2" y="44" size="1.27" layer="25" rot="R90" align="bottom-center"/>
 </element>
-<element name="Q6" library="Custom_old" package="TO-220-FLAT" value="MOSFET-NCHANNELTO-220-FLAT" x="37" y="50" smashed="yes">
+<element name="Q6" library="Custom_old" package="TO-220-FLAT" value="" x="37" y="50" smashed="yes">
 <attribute name="NAME" x="42.2" y="50" size="1.27" layer="25" rot="R90" align="bottom-center"/>
 </element>
 <element name="U$6" library="Custom_old" package="PAD" value="PAD" x="7" y="72" smashed="yes"/>
@@ -1029,8 +1029,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="D2" library="Seeed-Diode" package="SOD-123" value="" x="24" y="6" smashed="yes" rot="R180">
 <attribute name="MPN" value="MMSD4148" x="24" y="6" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="24.889" y="6.635" size="0.381" layer="33" ratio="10" rot="R180"/>
 <attribute name="NAME" x="24.905" y="4.857" size="0.889" layer="25" ratio="11" rot="R180"/>
+<attribute name="NAME" x="24.889" y="6.635" size="0.381" layer="33" ratio="10" rot="R180"/>
 <attribute name="VALUE" x="25.905" y="8.032" size="0.889" layer="27" font="vector" ratio="11" rot="R180"/>
 </element>
 <element name="C2" library="SparkFun-Capacitors" package="1206" value="1uF" x="16" y="3" smashed="yes">
@@ -1044,8 +1044,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="D3" library="Seeed-Diode" package="SOD-123" value="" x="16" y="6" smashed="yes" rot="R180">
 <attribute name="MPN" value="MMSD4148" x="16" y="9" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="16.905" y="4.857" size="0.889" layer="25" ratio="11" rot="R180"/>
 <attribute name="NAME" x="16.889" y="6.635" size="0.381" layer="33" ratio="10" rot="R180"/>
+<attribute name="NAME" x="16.905" y="4.857" size="0.889" layer="25" ratio="11" rot="R180"/>
 <attribute name="VALUE" x="17.905" y="8.032" size="0.889" layer="27" font="vector" ratio="11" rot="R180"/>
 </element>
 <element name="C3" library="SparkFun-Capacitors" package="1206" value="1uF" x="9.5" y="3" smashed="yes">
@@ -1059,8 +1059,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="D4" library="Seeed-Diode" package="SOD-123" value="" x="9" y="6" smashed="yes" rot="R180">
 <attribute name="MPN" value="MMSD4148" x="9" y="9" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="9.905" y="4.857" size="0.889" layer="25" ratio="11" rot="R180"/>
 <attribute name="NAME" x="9.889" y="6.635" size="0.381" layer="33" ratio="10" rot="R180"/>
+<attribute name="NAME" x="9.905" y="4.857" size="0.889" layer="25" ratio="11" rot="R180"/>
 <attribute name="VALUE" x="10.905" y="8.032" size="0.889" layer="27" font="vector" ratio="11" rot="R180"/>
 </element>
 <element name="S1" library="SparkFun-Switches" package="TACTILE_SWITCH_PTH_6.0MM" value="" x="88.8" y="27.4" smashed="yes" rot="R180">
@@ -1078,7 +1078,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PROD_ID" value="CAP-09822" x="32" y="12" size="1.778" layer="27" display="off"/>
 <attribute name="VALUE" x="33" y="13.2" size="0.6096" layer="27" font="vector" ratio="20" align="bottom-center"/>
 </element>
-<element name="R9" library="Custom_old" package="R2512" value="0.001" x="52" y="70" smashed="yes" rot="R180">
+<element name="R9" library="Custom_old" package="R2512" value="0.0005" x="52" y="70" smashed="yes" rot="R180">
 <attribute name="NAME" x="52.8" y="72.6" size="0.6096" layer="25" rot="R180"/>
 <attribute name="VALUE" x="56" y="72.6" size="0.6096" layer="27" rot="R180"/>
 </element>
@@ -1244,7 +1244,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="37.5" y="12.5" extent="1-16" drill="0.5"/>
 <via x="65.5" y="2.5" extent="1-16" drill="0.5"/>
 <via x="76.5" y="2.5" extent="1-16" drill="0.5"/>
-<via x="76.5" y="9.5" extent="1-16" drill="0.5"/>
 <via x="84.5" y="2.5" extent="1-16" drill="0.5"/>
 <via x="55.5" y="10.5" extent="1-16" drill="0.5"/>
 <via x="56.5" y="16" extent="1-16" drill="0.5"/>
@@ -1258,7 +1257,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="28.5" y="19.5" extent="1-16" drill="0.5"/>
 <via x="28.5" y="21.5" extent="1-16" drill="0.5"/>
 <via x="37.5" y="18.5" extent="1-16" drill="0.5"/>
-<via x="76.5" y="14.5" extent="1-16" drill="0.5"/>
 <via x="76.5" y="19.5" extent="1-16" drill="0.5"/>
 <via x="76.5" y="24.5" extent="1-16" drill="0.5"/>
 <via x="63.5" y="23.5" extent="1-16" drill="0.5"/>
