@@ -1029,8 +1029,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="D2" library="Seeed-Diode" package="SOD-123" value="" x="24" y="6" smashed="yes" rot="R180">
 <attribute name="MPN" value="MMSD4148" x="24" y="6" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="24.905" y="4.857" size="0.889" layer="25" ratio="11" rot="R180"/>
 <attribute name="NAME" x="24.889" y="6.635" size="0.381" layer="33" ratio="10" rot="R180"/>
+<attribute name="NAME" x="24.905" y="4.857" size="0.889" layer="25" ratio="11" rot="R180"/>
 <attribute name="VALUE" x="25.905" y="8.032" size="0.889" layer="27" font="vector" ratio="11" rot="R180"/>
 </element>
 <element name="C2" library="SparkFun-Capacitors" package="1206" value="1uF" x="16" y="3" smashed="yes">
@@ -1044,8 +1044,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="D3" library="Seeed-Diode" package="SOD-123" value="" x="16" y="6" smashed="yes" rot="R180">
 <attribute name="MPN" value="MMSD4148" x="16" y="9" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="16.889" y="6.635" size="0.381" layer="33" ratio="10" rot="R180"/>
 <attribute name="NAME" x="16.905" y="4.857" size="0.889" layer="25" ratio="11" rot="R180"/>
+<attribute name="NAME" x="16.889" y="6.635" size="0.381" layer="33" ratio="10" rot="R180"/>
 <attribute name="VALUE" x="17.905" y="8.032" size="0.889" layer="27" font="vector" ratio="11" rot="R180"/>
 </element>
 <element name="C3" library="SparkFun-Capacitors" package="1206" value="1uF" x="9.5" y="3" smashed="yes">
@@ -1059,8 +1059,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="D4" library="Seeed-Diode" package="SOD-123" value="" x="9" y="6" smashed="yes" rot="R180">
 <attribute name="MPN" value="MMSD4148" x="9" y="9" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="9.889" y="6.635" size="0.381" layer="33" ratio="10" rot="R180"/>
 <attribute name="NAME" x="9.905" y="4.857" size="0.889" layer="25" ratio="11" rot="R180"/>
+<attribute name="NAME" x="9.889" y="6.635" size="0.381" layer="33" ratio="10" rot="R180"/>
 <attribute name="VALUE" x="10.905" y="8.032" size="0.889" layer="27" font="vector" ratio="11" rot="R180"/>
 </element>
 <element name="S1" library="SparkFun-Switches" package="TACTILE_SWITCH_PTH_6.0MM" value="" x="88.8" y="27.4" smashed="yes" rot="R180">
@@ -1127,9 +1127,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="VALUE" x="54" y="21.143" size="0.6096" layer="27" font="vector" ratio="20" rot="R180" align="top-center"/>
 </element>
 <element name="R14" library="SparkFun-Resistors" package="1206" value="22" x="6" y="19" smashed="yes" rot="R90">
-<attribute name="NAME" x="7.8" y="18" size="0.6096" layer="25" font="vector" ratio="20" rot="R90" align="bottom-center"/>
+<attribute name="NAME" x="4.8" y="18" size="0.6096" layer="25" font="vector" ratio="20" rot="R90" align="bottom-center"/>
 <attribute name="PROD_ID" value=" " x="6" y="19" size="1.016" layer="27" rot="R90" display="off"/>
-<attribute name="VALUE" x="7.8" y="20" size="0.6096" layer="27" font="vector" ratio="20" rot="R270" align="top-center"/>
+<attribute name="VALUE" x="4.8" y="20" size="0.6096" layer="27" font="vector" ratio="20" rot="R270" align="top-center"/>
 </element>
 <element name="R15" library="SparkFun-Resistors" package="1206" value="22" x="10" y="19" smashed="yes" rot="R90">
 <attribute name="NAME" x="8.857" y="18" size="0.6096" layer="25" font="vector" ratio="20" rot="R90" align="bottom-center"/>
