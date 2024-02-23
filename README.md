@@ -1,6 +1,6 @@
 # EasyController3
 
-*Update May 12, 2023 - During high power testing above 15 amps, it was discovered that the gate drivers are unreliable. A fix has been developed, and version 3.1 will be released soon. We were in a bit of a rush to release and didn't test as thoroughly as we should have. We do NOT RECOMMEND building this version at this time, and please check back for the update.*
+*Update Feb 23, 2024 - The EasyController 3.2 has been released, which has been more thoroughly tested than the 3.0. Further tutorial videos and build guides are coming!*
 
 
 
@@ -10,8 +10,8 @@ The EasyController3 is the next evolution of the successful [EasyController2](ht
 
 ## Improvements over the EasyController2
 
-* Reduced BOM cost from $70 to $36
-* Uses more efficient synchronous PWM. 5-10% greater efficiency under partial throttle operation
+* Reduced BOM cost from $70 to $43
+* Uses more efficient synchronous PWM. Greater efficiency under partial throttle operation
 * Improved from duty-cycle control to torque-control, improving controllability and reducing current spikes
 * Added regenerative braking
 * Lowered quiescent power from 960 mW to 280 mW in a typical installation
@@ -34,12 +34,12 @@ The EasyController family was built to to fill a gap in publicly released motor 
 * Large surface mount components designed to be hand-soldered by hobbyists
 * Socket for automotive fuse
 * Automatic hall sensor identification
-* Simple, well-documented code. <300 lines with comments
+* Simple, well-documented code. <400 lines with comments
 * Torque or duty-cycle control
 * Raspberry Pi Pico microcontroller, compatible with Windows/Mac/Linux
 * DGD2304 gate drivers
-* SIR5802 MOSFETS
-* BOM cost of $36 USD
+* IRFB7730 MOSFETS
+* BOM cost of $43 USD
 * Open source under MIT License
 
 ## Schematic
