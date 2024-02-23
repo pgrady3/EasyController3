@@ -14,9 +14,10 @@ const bool IDENTIFY_HALLS_ON_BOOT = true;   // If true, controller will initiali
 const bool IDENTIFY_HALLS_REVERSE = false;  // If true, will initialize the hall table to spin the motor backwards
 
 uint8_t hallToMotor[8] = {255, 255, 255, 255, 255, 255, 255, 255};  // Default hall table. Overwrite this with the output of the hall auto-identification 
+// uint8_t hallToMotor[8] = {255, 2, 0, 1, 4, 3, 5, 255};  // Example hall table
 
-const int THROTTLE_LOW = 600;   // ADC value corresponding to minimum throttle, 0-4095
-const int THROTTLE_HIGH = 2650; // ADC value corresponding to maximum throttle, 0-4095
+const int THROTTLE_LOW = 600;               // ADC value corresponding to minimum throttle, 0-4095
+const int THROTTLE_HIGH = 2650;             // ADC value corresponding to maximum throttle, 0-4095
 
 const bool CURRENT_CONTROL = true;          // Use current control or duty cycle control
 const int PHASE_MAX_CURRENT_MA = 6000;      // If using current control, the maximum phase current allowed
@@ -43,7 +44,7 @@ const uint A_PWM_SLICE = 0;
 const uint B_PWM_SLICE = 1;
 const uint C_PWM_SLICE = 2;
 
-const uint F_PWM = 16000;
+const uint F_PWM = 16000;   // Desired PWM frequency
 const uint FLAG_PIN = 2;
 const uint HALL_OVERSAMPLE = 8;
 
